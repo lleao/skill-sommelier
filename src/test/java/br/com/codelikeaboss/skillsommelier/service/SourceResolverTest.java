@@ -216,7 +216,9 @@ class SourceResolverTest {
         Path commitDir = r.resolve(byCommit);
 
         assertEquals("v2", Files.readString(latestDir.resolve("skills/demo/SKILL.md")));
-        assertEquals("---\nname: demo\n---\n", Files.readString(tagDir.resolve("skills/demo/SKILL.md")));
+        // git may check out CRLF on Windows (core.autocrlf)
+        assertEquals("---\nname: demo\n---\n",
+                Files.readString(tagDir.resolve("skills/demo/SKILL.md")).replace("\r\n", "\n"));
         assertEquals(Files.readString(tagDir.resolve("skills/demo/SKILL.md")),
                 Files.readString(commitDir.resolve("skills/demo/SKILL.md")));
         assertEquals(3, List.of(latestDir, tagDir, commitDir).stream().distinct().count(), "one clone per ref");
