@@ -1,0 +1,97 @@
+name: Release
+
+# Push a tag like v1.2.3 to publish that version to Maven Central and create a GitHub Release.
+#
+# Each destination is its own job and each job is idempotent, so after a failure "Re-run failed jobs"
+# retries only what failed: Maven Central is skipped when the version is already published, and the
+# GitHub Release is updated when it already exists.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Set version from tag
+        run: mvn -B -ntp versions:set -DnewVersion="${GITHUB_REF_NAME#v}" -DgenerateBackupPoms=false
+      # Unit and integration tests, plus the sources and javadoc jars. Signing happens in the central job.
+      - run: mvn -B -ntp -Prelease -Dgpg.skip verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jars
+          path: target/skill-sommelier-maven-plugin-*.jar
+          if-no-files-found: error
+
+  central:
+    name: Publish to Maven Central
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          # Writes a settings.xml with the "central" server and imports the signing key.
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: Set version from tag
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          mvn -B -ntp versions:set -DnewVersion="${GITHUB_REF_NAME#v}" -DgenerateBackupPoms=false
+      # Central releases are immutable, so a re-run must not deploy a version that is already out.
+      - name: Check whether this version is already published
+        id: published
+        run: |
+          auth=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+          status=$(curl -fsS -H "Authorization: Bearer $auth" \
+            "https://central.sonatype.com/api/v1/publisher/published?namespace=br.com.codelikeaboss&name=skill-sommelier-maven-plugin&version=$VERSION")
+          echo "Central Portal: $status"
+          echo "published=$(jq -r .published <<< "$status")" >> "$GITHUB_OUTPUT"
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+      # Tests already ran in the build job.
+      - name: Sign and publish
+        if: steps.published.outputs.published != 'true'
+        run: mvn -B -ntp -Prelease -DskipTests -Dinvoker.skip deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+  github:
+    name: Create GitHub Release
+    # Only announce a version that can be resolved from Maven Central.
+    needs: central
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: jars
+      - name: Create or update the release
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber ./*.jar
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
+              --verify-tag --generate-notes ./*.jar
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -35,7 +35,7 @@ Add the plugin and your sources to `pom.xml`:
 <plugin>
   <groupId>br.com.codelikeaboss</groupId>
   <artifactId>skill-sommelier-maven-plugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <executions>
     <!-- optional: keep installed skills up to date on every build -->
     <execution>
@@ -120,7 +120,7 @@ When `add` runs without `-Dsource`/`-Dskill`, it opens menus:
 In batch mode (`-B`, CI), missing parameters are an error instead.
 
 `add` also works outside a Maven project. Use a URL or a path as the source:
-`mvn br.com.codelikeaboss:skill-sommelier-maven-plugin:1.0-SNAPSHOT:add -Dsource=https://github.com/anthropics/skills -Dskill=pdf`.
+`mvn br.com.codelikeaboss:skill-sommelier-maven-plugin:1.0.0:add -Dsource=https://github.com/anthropics/skills -Dskill=pdf`.
 
 ## Keeping skills up to date
 
@@ -200,7 +200,7 @@ checks the installed folders, without network access. To run it on every CI buil
     "tasks": [{
       "label": "Sync AI skills",
       "type": "shell",
-      "command": "mvn -B -q br.com.codelikeaboss:skill-sommelier-maven-plugin:1.0-SNAPSHOT:sync",
+      "command": "mvn -B -q br.com.codelikeaboss:skill-sommelier-maven-plugin:1.0.0:sync",
       "runOptions": { "runOn": "folderOpen" },
       "presentation": { "reveal": "silent" },
       "problemMatcher": []
@@ -231,6 +231,9 @@ Remote sources are cloned into `~/.skill-sommelier/cache` (`-Dskillsommelier.cac
 mvn verify        # unit tests + integration tests in src/it (maven-invoker-plugin)
 mvn install       # install the plugin into ~/.m2
 ```
+
+Releases are published to Maven Central and GitHub Releases by pushing a `vX.Y.Z` tag. See
+[AGENTS.md](AGENTS.md#releasing).
 
 ## License
 

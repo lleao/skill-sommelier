@@ -26,7 +26,7 @@ Coordinates: `br.com.codelikeaboss:skill-sommelier-maven-plugin`, goal prefix `s
 ## Repository layout
 
 ```
-pom.xml  README.md  LICENSE  AGENTS.md  .github/workflows/ci.yml
+pom.xml  README.md  LICENSE  AGENTS.md  .github/workflows/{ci,release}.yml
 src/main/java/br/com/codelikeaboss/skillsommelier/
 ├── model/
 │   ├── SkillCatalog.java, SkillSource.java   # <catalog><sources><source> (name, url, token, ref)
@@ -73,7 +73,7 @@ All three are git-ignored.
 
 ```bash
 mvn verify                 # 50+ unit tests + invoker ITs (need git on the PATH)
-mvn install                # also installs into ~/.m2 (consumers resolve 1.0-SNAPSHOT from there)
+mvn install                # also installs into ~/.m2 (consumers resolve the -SNAPSHOT version from there)
 mvn -Dinvoker.skip test    # unit tests only (fast)
 mvn -Dinvoker.test=remove verify   # a single IT
 ```
@@ -81,6 +81,28 @@ mvn -Dinvoker.test=remove verify   # a single IT
 CI (`.github/workflows/ci.yml`) runs `mvn verify` on Linux, macOS and Windows with JDK 17 and 21. Tests that need Unix commands or symlinks are `@DisabledOnOs(WINDOWS)`.
 
 When scripting in zsh, write `${VAR}:goal`, not `$VAR:goal`. zsh reads `:a`, `:r`, `:l` and similar as modifiers and silently changes the command.
+
+## Releasing
+
+`main` stays on a `-SNAPSHOT` version. `.github/workflows/release.yml` runs when a tag `vX.Y.Z` is pushed. In each
+job, `versions:set` sets the version to `X.Y.Z` in the runner only; nothing is committed back.
+
+1. `build`: runs every test and builds the jar, sources jar and javadoc jar.
+2. `central` (after `build`): asks the Central Portal API whether `X.Y.Z` is already published and, if not, runs
+   `mvn -Prelease deploy`: signs with GPG and publishes through `central-publishing-maven-plugin` (`autoPublish`,
+   waits until the release is published).
+3. `github` (after `central`): creates the GitHub Release with generated notes and the jars from `build`, or
+   re-uploads them if the release already exists.
+
+Each job is idempotent, so after a failure **Re-run failed jobs** retries only the destination that failed. Builds
+are reproducible (`project.build.outputTimestamp`), so the jars on GitHub and on Central are byte-identical.
+
+Repository secrets: `CENTRAL_USERNAME` / `CENTRAL_PASSWORD` (a Central Portal user token, not the login),
+`GPG_PRIVATE_KEY` (ASCII-armoured secret key) and `GPG_PASSPHRASE`. The `br.com.codelikeaboss` namespace must be
+verified in the Central Portal, and the public key must be on a keyserver such as `keys.openpgp.org`.
+
+After a release, bump `<version>` in the pom to the next `-SNAPSHOT` and update the version shown in README.md.
+Maven Central releases cannot be deleted or overwritten, so a failed release must use a new version number.
 
 ## How it works (key rules)
 

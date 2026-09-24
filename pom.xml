@@ -6,11 +6,13 @@
 
     <groupId>br.com.codelikeaboss</groupId>
     <artifactId>skill-sommelier-maven-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Skill Sommelier Maven Plugin</name>
     <description>Package manager for AI coding-agent skills (OpenCode, Claude Code, GitHub Copilot).</description>
+    <url>https://github.com/lleao/skill-sommelier</url>
+    <inceptionYear>2026</inceptionYear>
 
     <licenses>
         <license>
@@ -20,6 +22,26 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>lleao</id>
+            <name>Luis</name>
+            <url>https://github.com/lleao</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/lleao/skill-sommelier.git</connection>
+        <developerConnection>scm:git:git@github.com:lleao/skill-sommelier.git</developerConnection>
+        <url>https://github.com/lleao/skill-sommelier</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/lleao/skill-sommelier/issues</url>
+    </issueManagement>
+
     <prerequisites>
         <maven>${maven.version.min}</maven>
     </prerequisites>
@@ -27,6 +49,8 @@
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Reproducible builds: the release jobs build the same jars twice (GitHub Release and Central). -->
+        <project.build.outputTimestamp>2026-01-01T00:00:00Z</project.build.outputTimestamp>
         <maven.version.min>3.6.3</maven.version.min>
         <maven.version>3.9.9</maven.version>
         <plugin-tools.version>3.15.1</plugin-tools.version>
@@ -136,4 +160,76 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Publishes to Maven Central through the Central Portal: mvn -Prelease deploy.
+            Needs a "central" server in settings.xml (Portal user token) and a GPG key; see AGENTS.md.
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <configuration>
+                            <doclint>all,-missing</doclint>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Reads the passphrase from MAVEN_GPG_PASSPHRASE; never prompts in CI. -->
+                                    <bestPractices>true</bestPractices>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.11.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
