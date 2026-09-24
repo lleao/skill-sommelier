@@ -1,0 +1,10 @@
+{
+  "version" : 1,
+  "skills" : [ {
+    "name" : "demo",
+    "target" : "claude",
+    "source" : "gone",
+    "url" : "https://127.0.0.1:9/nope.git",
+    "hash" : "sha256:x"
+  } ]
+}

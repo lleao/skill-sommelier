@@ -1,0 +1,10 @@
+{
+  "version" : 1,
+  "skills" : [ {
+    "name" : "demo",
+    "target" : "claude",
+    "source" : "local",
+    "url" : "skills-source",
+    "hash" : "sha256:outdated"
+  } ]
+}

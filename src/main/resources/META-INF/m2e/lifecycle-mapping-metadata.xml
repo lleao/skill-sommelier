@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tells m2e (Eclipse, VS Code with the Red Hat Java extension) to run "sync" when the project is imported/updated. -->
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>sync</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute>
+          <runOnConfiguration>true</runOnConfiguration>
+          <runOnIncremental>false</runOnIncremental>
+        </execute>
+      </action>
+    </pluginExecution>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>add</goal>
+          <goal>list</goal>
+          <goal>check</goal>
+          <goal>update</goal>
+          <goal>remove</goal>
+          <goal>clean</goal>
+          <goal>help</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <ignore/>
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>

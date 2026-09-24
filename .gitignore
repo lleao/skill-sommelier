@@ -1,0 +1,15 @@
+# Build output
+target/
+
+# IDE / editor
+.history/
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
+
+# Local state of the GitHub Copilot app-modernization extension
+.github/modernize/

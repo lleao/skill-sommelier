@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>it</groupId>
+  <artifactId>declared-skills</artifactId>
+  <version>1</version>
+  <packaging>pom</packaging>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>@project.groupId@</groupId>
+        <artifactId>@project.artifactId@</artifactId>
+        <version>@project.version@</version>
+        <executions><execution><goals><goal>sync</goal></goals></execution></executions>
+        <configuration>
+          <cacheDir>${project.build.directory}/cache</cacheDir>
+          <catalog>
+            <sources>
+              <source>
+                <name>local</name>
+                <url>skills-source</url>
+              </source>
+            </sources>
+          </catalog>
+          <skills>
+            <!-- source omitted: the catalog has a single source -->
+            <skill>
+              <name>demo</name>
+              <target>claude,copilot</target>
+            </skill>
+          </skills>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
